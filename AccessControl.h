@@ -2,26 +2,28 @@
 #define ACCESSCONTROL_H
 
 #include <string>
-#include <map>
-#include <utility> // For std::pair
+
+//instantiates class for using it
+class SystemState;
 
 
-//adgangskoder
-const std::string ADMIN_PASSWORD = "1122"; // Erstat med et sikkert password
-const std::string USER_PASSWORD = "2211";
 
-// Definer en type til at holde åbningstider (start, slut)
+//type to hold opening hours
 using OpeningHours = std::pair<int, int>; // Timer i 24-timers format
 
-//funktioner til at tjekke admin og user passwords input
-bool checkAdminPassword(const std::string& password);
-bool checkUserPassword(const std::string& password);
 
-//bekræfter det er inden for åbningstid
-bool checkOpenTime();
-//ændre åbningstid
-void setOpeningHours(const std::string& day, int openHour, int closeHour);
-//print de nuværende konfigurerede åbnignstider.
-void printOpeningHours();
+
+//funktions to check admin and user password inputs
+bool checkAdminPassword(const std::string&);
+bool checkUserPassword(const std::string&);
+
+//check if current time is within opening hours
+bool checkOpenTime(SystemState& state);
+
+//set opening hours for a specific day
+void setOpeningHours(SystemState& state, const std::string& day, int openHour, int closeHour);
+
+//print current opening hours for all days
+void printOpeningHours(const SystemState& state);
 
 #endif // ACCESSCONTROL_H

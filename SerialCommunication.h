@@ -1,20 +1,21 @@
 #ifndef SERIALCOMMUNICATION_H
 #define SERIALCOMMUNICATION_H
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 #include <fcntl.h>
 #include <termios.h>
 #include <unistd.h>
-#include <string.h>
+#include <cstring>
 #include <atomic>
+
+#include "SystemState.h"
 
 extern std::atomic<bool> isDoorOpenOrOpening;
 
-void readCommand(int uart0_filestream);
-
-
+bool setupUART(int& uart0_filestream);
+void readCommand(int& uart0_filestream, SystemState& state);
 int sendOpenCommand(int uart0_filestream);
-
+void handleReceivedMessage(const std::string& message, SystemState& state);
 
 #endif // SERIALCOMMUNICATION_H
