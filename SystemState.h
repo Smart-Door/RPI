@@ -29,9 +29,7 @@ public:
     std::atomic<int> failedPasswordAttempts{0};
     std::atomic<bool> isSystemLocked{false};
 
-    //userlogin og unlock system funktion
-    //bool attemptUserLogin(const std::string& password);
-    //void unlockSystem(const std::string& adminPassword);
+
 
     //constructor initializes default states and opening hours
     SystemState();
