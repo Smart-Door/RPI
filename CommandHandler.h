@@ -1,25 +1,31 @@
-// CommandHandler.h
+//CommandHandler.h
 #ifndef COMMANDHANDLER_H
 #define COMMANDHANDLER_H
 
 #include "SystemState.h"
 #include "SerialCommunication.h"
-#include "AccessControl.h"
-#include "GPIOControl.h"
-
+#include "TimeUtility.h"
+#include "PasswordManager.h"
 
 #include <iostream>
 #include <limits>
+#include <map>
+#include <fstream>
+#include <sstream>
+#include <string>
 
-//main loop to process user commands
-void runCommandLoop(int uart0_filestream, SystemState& state);
-//handle 'open' command to open the door
-void handleOpenCommand(int uart0_filestream, SystemState& state);
-//handle 'skift' command to change opening hours
-void handleSkiftCommand(SystemState& state);
-//verify if the provided password is correct
-bool verifyPassword(SystemState& state, const std::string& password, bool isAdmin);
+class CommandHandler {
+public:
+    CommandHandler(SystemState& state, SerialCommunication& serialComm, TimeUtility& timeUtility);
 
-int getValidHour(const std::string& prompt);
+    void runCommandLoop(const std::map<std::string, std::string>& credentials);
+    void handleOpenCommand(const std::map<std::string, std::string>& credentials);
+    void handleSkiftCommand(const std::map<std::string, std::string>& credentials);
+private:
+    SystemState& state;
+    SerialCommunication& serialComm;
+    TimeUtility& timeUtility;
+
+};
 
 #endif // COMMANDHANDLER_H

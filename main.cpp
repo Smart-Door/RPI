@@ -1,25 +1,25 @@
+//main.cpp
 #include <iostream>
 #include <exception>
 #include <thread>
 
 #include "SerialCommunication.h"
-#include "AccessControl.h"
+#include "TimeUtility.h"
 #include "CommandHandler.h"
 #include "SystemState.h"
 #include "GPIOControl.h"
+#include "PasswordManager.h"
 
-constexpr char openDoorCommand[] = "open_door";
 
 
 //function to start a thread monitoring button press for opening the door
-std::thread startButtonThread(SystemState& state, int& uart0_filestream) {
-    return std::thread([&state, &uart0_filestream]() {
+std::thread startButtonThread(SystemState& state, SerialCommunication& serialComm) {
+    return std::thread([&state, &serialComm]() {
         while (state.programRunning.load()) {
-            bool buttonPressed = readButton();
-            if (buttonPressed && !state.isDoorOpenOrOpening.load()) {
+            if (GPIOControl::readButton() && !state.isDoorOpenOrOpening.load()) {
                 std::cout << "Døren åbnes - med knap" << std::endl;
-                sendOpenCommand(uart0_filestream);
-                state.isDoorOpenOrOpening = true;
+                serialComm.sendOpenCommand();
+                state.doorIsOpen();
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(400));
         }
@@ -27,43 +27,48 @@ std::thread startButtonThread(SystemState& state, int& uart0_filestream) {
 }
 
 //function to start a thread for reading commands from UART
-std::thread startReadThread(SystemState& state, int& uart0_filestream) {
-    return std::thread([&state, &uart0_filestream]() {
-        readCommand(uart0_filestream, state); // Modify readCommand to accept state
+std::thread startReadThread(SystemState& state, SerialCommunication& serialComm) {
+    return std::thread([&state, &serialComm]() {
+        serialComm.readCommand(state);
     });
 }
 
 int main() {
-    SystemState state; //nitialize system state
+
 
     try {
-        int uart0_filestream = -1;
+        SystemState state;
+        SerialCommunication serialComm;
+        TimeUtility timeUtility;
+
 
         //setup UART communication
-        if (!setupUART(uart0_filestream)) {
+        if (!serialComm.setupUART()) {
             return 1;
         }
 
         //start threads for button monitoring and UART reading
-        std::thread buttonThread = startButtonThread(state, uart0_filestream);
-        std::thread readThread = startReadThread(state, uart0_filestream);
+        std::thread buttonThread = startButtonThread(state, serialComm);
+        std::thread readThread = startReadThread(state, serialComm);
 
-        //run command loop for handling user input
-        runCommandLoop(uart0_filestream, state);
+        //load credentials, users.txt
+        auto credentials = PasswordManager::readUserCredentials("users.txt");
+
+        //create and run command loop for handling user input
+        CommandHandler commandHandler(state, serialComm, timeUtility);
+        commandHandler.runCommandLoop(credentials);
 
         //shutdown sequence
         state.programRunning = false;
         buttonThread.join();
         readThread.join();
 
-        //close UART filestream if it's open
-        if (uart0_filestream != -1) {
-            close(uart0_filestream);
-        }
+
 
     //catch and display exceptions    
     } catch (const std::exception& e) {
         std::cerr << "Exception: " << e.what() << std::endl;
+        return 1;
     }
 
     return 0;

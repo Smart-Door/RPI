@@ -1,3 +1,4 @@
+//SerialCommunication.h
 #ifndef SERIALCOMMUNICATION_H
 #define SERIALCOMMUNICATION_H
 
@@ -7,15 +8,24 @@
 #include <termios.h>
 #include <unistd.h>
 #include <cstring>
+#include <string>
 #include <atomic>
 
 #include "SystemState.h"
 
-extern std::atomic<bool> isDoorOpenOrOpening;
 
-bool setupUART(int& uart0_filestream);
-void readCommand(int& uart0_filestream, SystemState& state);
-int sendOpenCommand(int uart0_filestream);
-void handleReceivedMessage(const std::string& message, SystemState& state);
+
+class SerialCommunication {
+public:
+    SerialCommunication();
+    bool setupUART();
+    void readCommand(SystemState& state);
+    int sendOpenCommand() const;
+    void handleReceivedMessage(const std::string& message, SystemState& state);
+
+private:
+    int uart0_filestream = -1;
+};
+
 
 #endif // SERIALCOMMUNICATION_H

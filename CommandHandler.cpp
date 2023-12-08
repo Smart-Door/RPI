@@ -1,223 +1,222 @@
-
+//CommandHandler.cpp
 #include "CommandHandler.h"
+#include "GPIOControl.h"
 
+CommandHandler::CommandHandler(SystemState& state, SerialCommunication& serialComm, TimeUtility& timeUtility)
+        : state(state), serialComm(serialComm), timeUtility(timeUtility) {}
 
-//verify if the provided password is correct
-bool verifyPassword(SystemState& state, const std::string& password, bool isAdmin) {
-    bool passwordCorrect = isAdmin ? checkAdminPassword(password) : checkUserPassword(password);
-    if (!passwordCorrect) {
-        state.failedPasswordAttempts++; //increments failed attempts counter
-        if (state.failedPasswordAttempts >= 3) {
-            state.isSystemLocked = true; //locks if 3 failed attempts
-            std::cout << "System locked due to too many failed attempts." << std::endl;
+//main loop to process user commands
+void CommandHandler::runCommandLoop(const std::map<std::string, std::string>& credentials) {
+    while (true) {
+        if (state.isSystemLocked) {
+            if (!PasswordManager::unlockSystem(credentials, state)) {
+                continue;
+            }
         }
-        return false;
-    }
 
-    state.failedPasswordAttempts = 0; //reset failed attempts counter
-    return true;
+        std::cout << "*** Kommandoer ***:\n"
+                  << "  1      - Åben dør\n"
+                  << "  2      - Vis åbningstider\n"
+                  << "  3      - Skift åbningstider\n"
+                  << "  4      - help\n"
+                  << "  CTRL+C - Afslut program\n";
+        std::cout << "  Vælg 1 - 4 ";
+
+
+
+
+        std::string MenuInput;
+        std::getline(std::cin, MenuInput);
+
+        std::stringstream ss(MenuInput);
+        int MenuChoice;
+        if (!(ss >> MenuChoice) || !(MenuChoice >= 1 && MenuChoice <= 5)) {
+            std::cout << "------------------------------\n";
+            std::cout << "Ugyldig valg. Prøv igen.\n";
+            std::cout << "------------------------------\n";
+
+            continue;
+        }
+
+
+        //switch for the menu choices
+        switch (MenuChoice) {
+            case 1:
+                handleOpenCommand(credentials);
+                break;
+            case 2:
+                timeUtility.printOpeningHours();
+                break;
+            case 3:
+                handleSkiftCommand(credentials);
+                break;
+            case 4:
+                std::cout << "------------------------------\n";
+                std::cout << "Døren kan åbnes uden login\n";
+                std::cout << "inden for åbningstid.\n";
+                std::cout << "\n";
+                std::cout << "Ønsker du adgang?\n";
+                std::cout << "Kontakt   88888888?\n";
+                std::cout << "\n";
+                std::cout << "Har du glemt dit login?\n";
+                std::cout << "Kontakt teknik: 98988989\n";
+                std::cout << "\n";
+                std::cout << "Afslut program med CTRL+C\n";
+                std::cout << "------------------------------\n";
+
+                break;
+            default:
+                std::cout << "------------------------------\n";
+                std::cout << "Ugyldig valg. Prøv igen.\n";
+                std::cout << "------------------------------\n";
+
+                break;
+        }
+    }
 }
+
+
 
 //handle 'open' command to open the door
-void handleOpenCommand(int uart0_filestream, SystemState& state) {
 
-    //door not already open, within opening hours.
-    if (!state.isDoorOpenOrOpening.load() && checkOpenTime(state)) {
+void CommandHandler::handleOpenCommand(const std::map<std::string, std::string>& credentials) {
+    //if the door is not open and it's within opening hours
+    if (!state.isDoorOpenOrOpening.load() && timeUtility.checkOpenTime()) {
+        std::cout << "------------------------------\n";
         std::cout << "Døren åbnes - Inden for åbningstid." << std::endl;
-        sendOpenCommand(uart0_filestream);
+        std::cout << "------------------------------\n";
+
+
+        serialComm.sendOpenCommand();
         state.doorIsOpen();
     }
+        //if the door is not open and it's outside opening hours, password required
+    else if (!state.isDoorOpenOrOpening.load() && !timeUtility.checkOpenTime()) {
+        if (PasswordManager::authenticateOpenCommand(credentials, state)) {
 
-    //door not already open, outside opening hours - password required
-    else if (!state.isDoorOpenOrOpening.load() && !checkOpenTime(state))
-    {
-        std::cout << "Indtast admin eller user password for at åbne døren: ";
-        std::string password;
-        std::getline(std::cin, password);
+            std::cout << "------------------------------\n";
+            std::cout << "Døren åbnes efter godkendelse." << std::endl;
+            std::cout << "------------------------------\n";
 
-        //user password entered
-        if (verifyPassword(state, password, false))
-        {
-            std::cout << "Døren åbnes af user." << std::endl;
-            blinkLEDs();
-            sendOpenCommand(uart0_filestream);
+            serialComm.sendOpenCommand();
+            GPIOControl::blinkLEDs();
             state.doorIsOpen();
-        }
-
-        //admin password entered
-        else if (verifyPassword(state, password, true))
-        {
-            std::cout << "Døren åbnes af admin." << std::endl;
-            blinkLEDs();
-            sendOpenCommand(uart0_filestream);
-            state.doorIsOpen();
-        }
-
-        //password entered is not user or admin (wrong)
-        else
-        {
+        } else {
+            std::cout << "------------------------------\n";
             std::cout << "Forkert password." << std::endl;
+            std::cout << "------------------------------\n";
+
         }
     }
-    
-    //If door is already open (flag is set)
-    else
-    {
+        //if the door is already open
+    else {
+        std::cout << "------------------------------\n";
         std::cout << "Døren er allerede åben eller åbner." << std::endl;
-    }
+        std::cout << "------------------------------\n";
 
+    }
 }
 
+
+
+
 //handle 'skift' command to change opening hours
-/*
-void handleSkiftCommand(SystemState& state) {
+void CommandHandler::handleSkiftCommand(const std::map<std::string, std::string>& credentials) {
+    std::cout << "------------------------------\n";
+    std::cout << "Admin login kræves for at åbningstider: ";
+    std::cout << "\n------------------------------\n";
 
 
-    std::cout << "Indtast admin password for at ændre åbningstider: ";
-    std::string password;
-    std::getline(std::cin, password);
+    if (PasswordManager::authenticateSkiftCommand(credentials, state)) {
 
-    if (verifyPassword(state, password, true))
-    {
+        while (true) {
 
-        std::string day;
-        int openHour, closeHour;
+            std::cout << "\nVælg en dag:\n"
+                      << "1 - Mandag\n"
+                      << "2 - Tirsdag\n"
+                      << "3 - Onsdag\n"
+                      << "4 - Torsdag\n"
+                      << "5 - Fredag\n"
+                      << "6 - Lørdag\n"
+                      << "7 - Søndag\n";
+            std::cout << "Vælg en dag: ";
 
-        std::cout << "Indtast dag (Mandag, Tirsdag, osv.): ";
-        std::getline(std::cin, day);
+            std::string DayInput;
+            std::getline(std::cin, DayInput);
 
-        //if "dag" is entered correct(Mandag with capital M)
-        if (state.validDays.find(day) != state.validDays.end())
-        {
-            std::cout << "Indtast åbningstid (time, 0-23): ";
-            while (!(std::cin >> openHour) || openHour < 0 || openHour > 23)
-            {
-                std::cout << "Ugyldig time, prøv igen: ";
-                std::cin.clear();
-                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::stringstream ss(DayInput);
+            int DayChoice;
+            if (!(ss >> DayChoice) || !(DayChoice >= 1 && DayChoice <= 5)) {
+                std::cout << "------------------------------\n";
+                std::cout << "Ugyldig valg. Prøv igen.\n";
+                std::cout << "------------------------------\n";
+
+                continue;
+            }
+            //switch for the day choices
+            std::string day;
+            switch (DayChoice) {
+                case 1:
+                    day = "Mandag";
+                    break;
+                case 2:
+                    day = "Tirsdag";
+                    break;
+                case 3:
+                    day = "Onsdag";
+                    break;
+                case 4:
+                    day = "Torsdag";
+                    break;
+                case 5:
+                    day = "Fredag";
+                    break;
+                case 6:
+                    day = "Lørdag";
+                    break;
+                case 7:
+                    day = "Søndag";
+                    break;
+
+                default:
+                    std::cout << "------------------------------\n";
+                    std::cout << "Ugyldigt valg af dag..." << std::endl;
+                    std::cout << "------------------------------\n";
+
+                    return;
             }
 
-            std::cin.ignore();
-            std::cout << "Indtast lukketid (time, 0-23): ";
+            if (day.empty()) {
+                std::cout << "------------------------------\n";
+                std::cout << "Ingen dag valgt. Afslutter ændring af åbningstider." << std::endl;
+                std::cout << "------------------------------\n";
 
-            while (!(std::cin >> closeHour) || closeHour < 0 || closeHour > 23)
-            {
-                std::cout << "Ugyldig time, prøv igen: ";
-                std::cin.clear();
-                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                return;
             }
-            std::cin.ignore();
 
-            setOpeningHours(state, day, openHour, closeHour);
+
+            int openHour = TimeUtility::getValidHour("Indtast åbningstid (time, 0-23): ");
+            int closeHour = TimeUtility::getValidHour("Indtast lukketid (time, 0-23): ");
+
+
+            timeUtility.setOpeningHours(day, openHour, closeHour);
+            std::cout << "------------------------------\n";
             std::cout << "Åbningstider ændret for " << day << std::endl;
-        }
+            std::cout << "------------------------------\n";
 
-        //if "dag" is spelled incorrectly
-        else
-        {
-            std::cout << "Ugyldig dag indtastet." << std::endl;
-        }
-    }
-        //Hvis admin password er forkert
-    else
-    {
-        std::cout << "Forkert password." << std::endl;
-    }
-}
-*/
-
-//handle 'skift' command to change opening hours
-void handleSkiftCommand(SystemState& state) {
-    std::cout << "Indtast admin password for at ændre åbningstider: ";
-    std::string password;
-    std::getline(std::cin, password);
-
-    if (verifyPassword(state, password, true)) {
-        std::string day;
-        std::cout << "Indtast dag (Mandag, Tirsdag, osv.): ";
-        std::getline(std::cin, day);
-
-        if (state.validDays.find(day) == state.validDays.end()) {
-            std::cout << "Ugyldig dag indtastet." << std::endl;
             return;
         }
 
-        int openHour, closeHour;
-        openHour = getValidHour("Indtast åbningstid (time, 0-23): ");
-        closeHour = getValidHour("Indtast lukketid (time, 0-23): ");
-
-        setOpeningHours(state, day, openHour, closeHour);
-        std::cout << "Åbningstider ændret for " << day << std::endl;
     } else {
+        std::cout << "------------------------------\n";
         std::cout << "Forkert password." << std::endl;
+        std::cout << "------------------------------\n";
+
     }
 }
 
-//check valid hour
-int getValidHour(const std::string& prompt) {
-    int hour;
-    std::cout << prompt;
-    while (!(std::cin >> hour) || hour < 0 || hour > 23) {
-        std::cout << "Ugyldig time, prøv igen: ";
-        std::cin.clear();
-        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-    }
-    std::cin.ignore();
-    return hour;
-}
-
-//main loop to process user commands
-void runCommandLoop(int uart0_filestream, SystemState& state) {
-    
-    
-    while (true) {
-
-        //handle system lock before processing commands
-        if (state.isSystemLocked.load()) {
-            std::cout << "Systemet er låst. Indtast admin password ";
-            std::string password;
-            std::getline(std::cin, password);
-            if (!checkAdminPassword(password)) {
-                std::cout << "Forkert password." << std::endl;
-                continue;
-            }
-            state.failedPasswordAttempts = 0;
-            state.isSystemLocked = false;
-        }
 
 
-        std::cout << "Kommandoer: 'open', 'vis', 'skift', 'exit'" << std::endl;
-        std::cout << "Indtast kommando: ";
-        std::string command;
-        std::getline(std::cin, command);
 
-        //command = open
-        if (command == "open")
-        {
-            handleOpenCommand(uart0_filestream, state);
-        }
 
-        //command = vis
-        else if (command == "vis")
-        {
-            printOpeningHours(state);
-        }
 
-        //command = skift
-        else if (command == "skift")
-        {
-            handleSkiftCommand(state);
-        }
-
-        //command = exit
-        else if (command == "exit")
-        {
-            break;
-        }
-        //Command isnt any of the possibilities
-        else
-        {
-            std::cout << "Ugyldig kommando." << std::endl;
-        }
-    }
-}
