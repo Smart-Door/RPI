@@ -21,7 +21,7 @@ public:
     bool setupUART();
     void readCommand(SystemState& state);
     int sendOpenCommand() const;
-    void handleReceivedMessage(const std::string& message, SystemState& state);
+    static void handleReceivedMessage(const std::string& message, SystemState& state);
 
 private:
     int uart0_filestream = -1;

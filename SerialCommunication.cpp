@@ -70,7 +70,7 @@ void SerialCommunication::readCommand(SystemState& state) {
             if (newlinePos != std::string::npos) {
                 std::string completeMessage = partialMessage.substr(0, newlinePos);
                 //**DEBUGGING** std::cout << "Handling message: " << completeMessage << std::endl; //debugging line
-                this->handleReceivedMessage(completeMessage, state); //processing the message
+                SerialCommunication::handleReceivedMessage(completeMessage, state); //processing the message
                 partialMessage.erase(0, newlinePos + 1);
             }
         }

@@ -55,7 +55,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "c:/Users/jespe/Desktop/RPI koden_final/cmake-build-debug"
+			"value" : "c:/Users/jespe/Documents/GitHub/RPI/cmake-build-debug"
 		},
 		{
 			"name" : "CMAKE_CACHE_MAJOR_VERSION",
@@ -575,7 +575,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "C:/Users/jespe/Desktop/RPI koden_final/cmake-build-debug/CMakeFiles/pkgRedirects"
+			"value" : "C:/Users/jespe/Documents/GitHub/RPI/cmake-build-debug/CMakeFiles/pkgRedirects"
 		},
 		{
 			"name" : "CMAKE_GENERATOR",
@@ -647,7 +647,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "C:/Users/jespe/Desktop/RPI koden_final"
+			"value" : "C:/Users/jespe/Documents/GitHub/RPI"
 		},
 		{
 			"name" : "CMAKE_INSTALL_PREFIX",
@@ -659,7 +659,7 @@
 				}
 			],
 			"type" : "PATH",
-			"value" : "C:/Program Files (x86)/RPI_koden__"
+			"value" : "C:/Program Files (x86)/RPI_koden_final"
 		},
 		{
 			"name" : "CMAKE_LINKER",
@@ -1254,42 +1254,6 @@
 			"value" : "FALSE"
 		},
 		{
-			"name" : "RPI_koden___BINARY_DIR",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : "Value Computed by CMake"
-				}
-			],
-			"type" : "STATIC",
-			"value" : "C:/Users/jespe/Desktop/RPI koden_final/cmake-build-debug"
-		},
-		{
-			"name" : "RPI_koden___IS_TOP_LEVEL",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : "Value Computed by CMake"
-				}
-			],
-			"type" : "STATIC",
-			"value" : "ON"
-		},
-		{
-			"name" : "RPI_koden___SOURCE_DIR",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : "Value Computed by CMake"
-				}
-			],
-			"type" : "STATIC",
-			"value" : "C:/Users/jespe/Desktop/RPI koden_final"
-		},
-		{
 			"name" : "RPI_koden_final_BINARY_DIR",
 			"properties" : 
 			[
@@ -1299,7 +1263,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "C:/Users/jespe/Desktop/RPI koden_final/cmake-build-debug"
+			"value" : "C:/Users/jespe/Documents/GitHub/RPI/cmake-build-debug"
 		},
 		{
 			"name" : "RPI_koden_final_IS_TOP_LEVEL",
@@ -1323,7 +1287,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "C:/Users/jespe/Desktop/RPI koden_final"
+			"value" : "C:/Users/jespe/Documents/GitHub/RPI"
 		},
 		{
 			"name" : "_CMAKE_LINKER_PUSHPOP_STATE_SUPPORTED",

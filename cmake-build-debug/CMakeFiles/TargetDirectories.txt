@@ -1,3 +1,3 @@
-C:/Users/jespe/Desktop/RPI koden_final/cmake-build-debug/CMakeFiles/RPI_koden_final.dir
-C:/Users/jespe/Desktop/RPI koden_final/cmake-build-debug/CMakeFiles/edit_cache.dir
-C:/Users/jespe/Desktop/RPI koden_final/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+C:/Users/jespe/Documents/GitHub/RPI/cmake-build-debug/CMakeFiles/RPI_koden_final.dir
+C:/Users/jespe/Documents/GitHub/RPI/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/jespe/Documents/GitHub/RPI/cmake-build-debug/CMakeFiles/rebuild_cache.dir
