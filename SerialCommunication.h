@@ -17,6 +17,9 @@
 
 class SerialCommunication {
 public:
+
+    static bool readButton();
+    static void blinkLEDs();
     SerialCommunication();
     bool setupUART();
     void readCommand(SystemState& state);

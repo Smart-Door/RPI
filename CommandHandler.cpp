@@ -1,6 +1,6 @@
 //CommandHandler.cpp
 #include "CommandHandler.h"
-#include "GPIOControl.h"
+#include "SerialCommunication.h"
 
 CommandHandler::CommandHandler(SystemState& state, SerialCommunication& serialComm, TimeUtility& timeUtility)
         : state(state), serialComm(serialComm), timeUtility(timeUtility) {}
@@ -8,12 +8,18 @@ CommandHandler::CommandHandler(SystemState& state, SerialCommunication& serialCo
 //main loop to process user commands
 void CommandHandler::runCommandLoop(const std::map<std::string, std::string>& credentials) {
     while (true) {
+
+        //checks state if system is locked for wrong attempts
         if (state.isSystemLocked) {
+            //If locked, attempt unlock it using unlockSystem
             if (!PasswordManager::unlockSystem(credentials, state)) {
+            //If unlocking fails, continue to next iteration of
+            // loop without processing rest off commands.
                 continue;
             }
         }
 
+        //If system is not locked, display menu
         std::cout << "*** Kommandoer ***:\n"
                   << "  1      - Åben dør\n"
                   << "  2      - Vis åbningstider\n"
@@ -24,20 +30,20 @@ void CommandHandler::runCommandLoop(const std::map<std::string, std::string>& cr
 
 
 
-
+        //reads the users choice
         std::string MenuInput;
         std::getline(std::cin, MenuInput);
-
         std::stringstream ss(MenuInput);
+
+        //validate valid choice
         int MenuChoice;
-        if (!(ss >> MenuChoice) || !(MenuChoice >= 1 && MenuChoice <= 5)) {
+        if (!(ss >> MenuChoice) || !(MenuChoice >= 1 && MenuChoice <= 4)) {
             std::cout << "------------------------------\n";
             std::cout << "Ugyldig valg. Prøv igen.\n";
             std::cout << "------------------------------\n";
 
             continue;
         }
-
 
         //switch for the menu choices
         switch (MenuChoice) {
@@ -63,13 +69,11 @@ void CommandHandler::runCommandLoop(const std::map<std::string, std::string>& cr
                 std::cout << "\n";
                 std::cout << "Afslut program med CTRL+C\n";
                 std::cout << "------------------------------\n";
-
                 break;
             default:
                 std::cout << "------------------------------\n";
                 std::cout << "Ugyldig valg. Prøv igen.\n";
                 std::cout << "------------------------------\n";
-
                 break;
         }
     }
@@ -78,7 +82,6 @@ void CommandHandler::runCommandLoop(const std::map<std::string, std::string>& cr
 
 
 //handle 'open' command to open the door
-
 void CommandHandler::handleOpenCommand(const std::map<std::string, std::string>& credentials) {
     //if the door is not open and it's within opening hours
     if (!state.isDoorOpenOrOpening.load() && timeUtility.checkOpenTime()) {
@@ -90,28 +93,27 @@ void CommandHandler::handleOpenCommand(const std::map<std::string, std::string>&
         serialComm.sendOpenCommand();
         state.doorIsOpen();
     }
-        //if the door is not open and it's outside opening hours, password required
+        //if the door is not open, and it's outside opening hours, password required
     else if (!state.isDoorOpenOrOpening.load() && !timeUtility.checkOpenTime()) {
         if (PasswordManager::authenticateOpenCommand(credentials, state)) {
 
             std::cout << "------------------------------\n";
-            std::cout << "Døren åbnes efter godkendelse." << std::endl;
+            std::cout << "Døren åbnes efter godkendelse.\n";
             std::cout << "------------------------------\n";
 
             serialComm.sendOpenCommand();
-            GPIOControl::blinkLEDs();
+            SerialCommunication::blinkLEDs();
             state.doorIsOpen();
         } else {
             std::cout << "------------------------------\n";
-            std::cout << "Forkert password." << std::endl;
+            std::cout << "Forkert password.\n";
             std::cout << "------------------------------\n";
 
         }
     }
-        //if the door is already open
     else {
         std::cout << "------------------------------\n";
-        std::cout << "Døren er allerede åben eller åbner." << std::endl;
+        std::cout << "Døren er allerede åben eller åbner\n";
         std::cout << "------------------------------\n";
 
     }

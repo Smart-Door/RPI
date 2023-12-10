@@ -3,6 +3,41 @@
 #include <chrono>
 #include <thread>
 
+
+bool PasswordManager::authenticateOpenCommand(const std::map<std::string, std::string>& credentials, SystemState& state) {
+    auto [username, password] = promptForCredentials();
+    if (verifyPassword(credentials, username, password)) {
+        state.failedPasswordAttempts = 0;
+        return true;
+    } else {
+        handleFailedAttempt(state);
+        return false;
+    }
+}
+
+bool PasswordManager::authenticateSkiftCommand(const std::map<std::string, std::string>& credentials, SystemState& state) {
+    auto [username, password] = promptForCredentials();
+    if (username == "admin" && verifyPassword(credentials, username, password)) {
+        state.failedPasswordAttempts = 0;
+        return true;
+    } else {
+        handleFailedAttempt(state);
+        return false;
+    }
+}
+
+std::pair<std::string, std::string> PasswordManager::promptForCredentials() {
+    std::string username, password;
+
+    std::cout << "Indtast brugernavn: ";
+    std::getline(std::cin, username);
+
+    std::cout << "Indtast password for " << username << ": ";
+    std::getline(std::cin, password);
+    return std::make_pair(username, password);
+}
+
+
 std::map<std::string, std::string> PasswordManager::readUserCredentials(const std::string& filename) {
     std::map<std::string, std::string> credentials;
     std::ifstream file(filename);
@@ -29,40 +64,13 @@ bool PasswordManager::verifyPassword(const std::map<std::string, std::string>& c
 
 
 
-std::pair<std::string, std::string> PasswordManager::promptForCredentials() {
-    std::string username, password;
-
-    std::cout << "Indtast brugernavn: ";
-    std::getline(std::cin, username);
-
-    std::cout << "Indtast password for " << username << ": ";
-    std::getline(std::cin, password);
-    return std::make_pair(username, password);
-}
 
 
 
-bool PasswordManager::authenticateOpenCommand(const std::map<std::string, std::string>& credentials, SystemState& state) {
-    auto [username, password] = promptForCredentials();
-    if (verifyPassword(credentials, username, password)) {
-        state.failedPasswordAttempts = 0;
-        return true;
-    } else {
-        handleFailedAttempt(state);
-        return false;
-    }
-}
 
-bool PasswordManager::authenticateSkiftCommand(const std::map<std::string, std::string>& credentials, SystemState& state) {
-    auto [username, password] = promptForCredentials();
-    if (username == "admin" && verifyPassword(credentials, username, password)) {
-        state.failedPasswordAttempts = 0;
-        return true;
-    } else {
-        handleFailedAttempt(state);
-        return false;
-    }
-}
+
+
+
 
 bool PasswordManager::unlockSystem(const std::map<std::string, std::string>& credentials, SystemState& state) {
     if (state.isSystemLocked) {

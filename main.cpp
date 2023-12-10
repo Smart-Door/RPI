@@ -7,7 +7,6 @@
 #include "TimeUtility.h"
 #include "CommandHandler.h"
 #include "SystemState.h"
-#include "GPIOControl.h"
 #include "PasswordManager.h"
 
 
@@ -16,7 +15,7 @@
 std::thread startButtonThread(SystemState& state, SerialCommunication& serialComm) {
     return std::thread([&state, &serialComm]() {
         while (state.programRunning.load()) {
-            if (GPIOControl::readButton() && !state.isDoorOpenOrOpening.load()) {
+            if (SerialCommunication::readButton() && !state.isDoorOpenOrOpening.load()) {
                 std::cout << "Døren åbnes - med knap" << std::endl;
                 serialComm.sendOpenCommand();
                 state.doorIsOpen();
@@ -54,7 +53,7 @@ int main() {
         //load credentials, users.txt
         auto credentials = PasswordManager::readUserCredentials("users.txt");
 
-        //create and run command loop for handling user input
+        //create and run command loop which is the program
         CommandHandler commandHandler(state, serialComm, timeUtility);
         commandHandler.runCommandLoop(credentials);
 

@@ -10,11 +10,51 @@
 #include <chrono>
 #include <atomic>
 #include <iostream>
+#include <fstream>
 #include "SerialCommunication.h"
 
 #include "SystemState.h"
 
 SerialCommunication::SerialCommunication() = default;
+
+
+
+
+
+//funktion to read button state on GPIO 12 with driver
+bool SerialCommunication::readButton() {
+    //std::ifstream valueFile("/dev/plat_drv_12");
+    std::ifstream valueFile("/dev/mygpio0");
+    //std::ifstream valueFile("/dev/pts/3");
+    if (!valueFile) {
+        //std::cerr << "Failed to open /dev/plat_drv_12 for reading." << std::endl;
+        std::cerr << "Failed to open /dev/mygpio0 for reading." << std::endl;
+        return false;
+    }
+    int value;
+    valueFile >> value;
+    return value == 0;
+}
+
+//function to blink leds with correct open password
+void SerialCommunication::blinkLEDs() {
+    //const std::string leds[] = {"/dev/plat_drv_20", "/dev/plat_drv_21", "/dev/plat_drv_26"};
+    const std::string leds[] = {"/dev/mygpio2", "/dev/mygpio3", "/dev/mygpio4"};
+    for (int i = 0; i < 3; ++i) { //number of blinks
+        for (const auto& led : leds) {
+            std::ofstream(led) << "1";
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        for (const auto& led : leds) {
+            std::ofstream(led) << "0";
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    }
+}
+
+
+
+
 
 bool SerialCommunication::setupUART() {
     //setupUART attempts
@@ -127,3 +167,4 @@ void SerialCommunication::handleReceivedMessage(const std::string& message, Syst
         std::cout << "\n*** Døren kan ikke lukke *** \nPrøver igen om 10 sekunder" << std::endl;
     }
 }
+

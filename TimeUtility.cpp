@@ -17,9 +17,7 @@ TimeUtility::TimeUtility() {
     openingHours.push_back({"Søndag", {9, 17}});
 }
 
-bool TimeUtility::isValidDay(const std::string& day) const {
-    return validDays.find(day) != validDays.end();
-}
+
 
 //check if current time is within opening hours
 bool TimeUtility::checkOpenTime() const {
@@ -45,7 +43,7 @@ void TimeUtility::setOpeningHours(const std::string &day, int openHour, int clos
     for (auto& [d, hours] : openingHours) {
         if (d == day) {
             hours = {openHour, closeHour};
-            return; // Update found day and return
+            return;
         }
     }
 }
